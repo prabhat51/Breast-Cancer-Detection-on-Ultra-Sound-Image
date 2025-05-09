@@ -73,14 +73,6 @@ python predict_pipeline.py \
 Predicted class: benign (0.92 confidence)
 ```
 
-## Saving the Predicted Mask
-```bash
-python predict_pipeline.py \
-  --image_path img.png \
-  --seg_model seg_model.pth \
-  --cls_model cls_model.pth \
-  --save_mask mask.png
-```
 
 ## Credits and References
 This implementation uses:
