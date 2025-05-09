@@ -2,6 +2,7 @@ import os
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
+import torch
 
 class ClassificationDataset(Dataset):
     """
@@ -29,12 +30,17 @@ class ClassificationDataset(Dataset):
             if not os.path.isdir(cls_mask_dir):
                 raise RuntimeError(f"Mask directory for class {cls_name} not found at {cls_mask_dir}")
             for fname in os.listdir(cls_img_dir):
-                if fname.endswith(('.jpg', '.jpeg', '.png')):
+                if fname.endswith(('.jpg', '.jpeg', '.png')) and '_mask' not in fname:
                     img_path = os.path.join(cls_img_dir, fname)
-                    # Assume mask has same filename in masks directory
-                    mask_path = os.path.join(cls_mask_dir, fname)
+                    
+                    # Derive corresponding mask filename
+                    base_name, ext = os.path.splitext(fname)
+                    mask_name = f"{base_name}_mask{ext}"
+                    mask_path = os.path.join(cls_mask_dir, mask_name)
+
                     if not os.path.exists(mask_path):
-                        raise RuntimeError(f"Mask {mask_path} not found")
+                        raise RuntimeError(f"Mask {mask_path} not found for image {img_path}")
+
                     self.samples.append((img_path, mask_path, cls_idx))
 
         if len(self.samples) == 0:
@@ -53,11 +59,10 @@ class ClassificationDataset(Dataset):
             image = self.transform_img(image)
         if self.transform_mask:
             mask = self.transform_mask(mask)
-        # Ensure mask is tensor
-        import torch
+
         if not isinstance(mask, torch.Tensor):
             mask = torch.from_numpy(np.array(mask, dtype='float32')).unsqueeze(0)
-        # Concatenate image and mask to create 4-channel input
+
         image_mask = torch.cat([image, mask], dim=0)  # shape: 4 x H x W
         label_tensor = torch.tensor(label, dtype=torch.long)
         return image_mask, label_tensor
