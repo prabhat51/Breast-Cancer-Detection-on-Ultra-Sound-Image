@@ -35,23 +35,65 @@ pip install -r requirements.txt  # if a requirements file is provided
 Train the segmentation model using `segmentation/train_segmentation.py`. You need to specify the dataset directory, number of epochs, batch size, and where to save the model. For example:
 ```bash
 python segmentation/train_segmentation.py \
-  --data_dir /path/to/Dataset_BUSI_with_GT \
+  --images-dir /path/to/images \
+  --masks-dir /path/to/masks \
   --epochs 30 \
-  --batch_size 4 \
-  --save_path segmentation_model.pth
+  --lr 0.001 \
+  --batch-size 4 \
+  --img-size 256 \
+  --val-split 0.2 \
+  --save-path segmentation_model.pth
+```
+```
+segmentation_dataset/
+├── images/
+│   ├── benign (1).png
+│   ├── malignant (2).png
+│   └── normal (3).png
+├── masks/
+│   ├── benign (1)_mask.png
+│   ├── malignant (2)_mask.png
+│   └── normal (3)_mask.png
+
 ```
 
 ### Classification Model Training
 Train the classification model using `classification/train_classification.py`. The model uses the ultrasound image plus a mask as input. You can use the ground truth masks or generate masks by running the trained segmentation model on the images. Example:
 ```bash
 python classification/train_classification.py \
-  --data_dir /path/to/Dataset_BUSI_with_GT \
-  --seg_model_path segmentation_model.pth \
-  --epochs 20 \
-  --batch_size 8 \
-  --save_path classification_model.pth
+  --images-dir /path/to/images \
+  --masks-dir /path/to/masks \
+  --epochs 30 \
+  --lr 0.001 \
+  --batch-size 16 \
+  --img-size 256 \
+  --val-split 0.2 \
+  --save-path classification_model.pth
 ```
+```
+classification_dataset/
+├── images/
+│   ├── benign/
+│   │   ├── benign (1).png
+│   │   ├── benign (2).png
+│   ├── malignant/
+│   │   ├── malignant (1).png
+│   │   ├── malignant (2).png
+│   └── normal/
+│       ├── normal (1).png
+│       ├── normal (2).png
+├── masks/
+│   ├── benign/
+│   │   ├── benign (1)_mask.png
+│   │   ├── benign (2)_mask.png
+│   ├── malignant/
+│   │   ├── malignant (1)_mask.png
+│   │   ├── malignant (2)_mask.png
+│   └── normal/
+│       ├── normal (1)_mask.png
+│       ├── normal (2)_mask.png
 
+```
 ## Prediction Pipeline
 Once both models are trained, use `predict_pipeline.py` to classify new images. The script will:
 1. Load the trained segmentation model and predict a mask for the input image.
@@ -62,10 +104,10 @@ Once both models are trained, use `predict_pipeline.py` to classify new images. 
 ### Usage
 ```bash
 python predict_pipeline.py \
-  --image_path /path/to/image.png \
-  --seg_model segmentation_model.pth \
-  --cls_model classification_model.pth \
-  --save_mask predicted_mask.png
+    --image "/path/to/image.png" \
+    --seg_model "/path/to/segmentation_model.pth" \
+    --cls_model "/path/to/classification_model.pth" \
+    --save_mask "/path/to/predicted_mask.png"
 ```
 
 ### Expected Outputs
@@ -78,3 +120,4 @@ Predicted class: benign (0.92 confidence)
 This implementation uses:
 - [segmentation_models_pytorch](https://github.com/qubvel/segmentation_models.pytorch) for DeepLabV3+.
 - [timm](https://github.com/huggingface/pytorch-image-models) for ConvNeXt-Base.
+- [Dataset](https://www.kaggle.com/datasets/aryashah2k/breast-ultrasound-images-dataset)
